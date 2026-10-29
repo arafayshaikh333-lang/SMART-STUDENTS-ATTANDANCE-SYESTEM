@@ -159,7 +159,7 @@ async function sendMessage(promptText) {
     const bodyPayload = { system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] }, contents };
     if (webSearchToggle.checked) { bodyPayload.tools = [{ google_search: {} }]; }
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bodyPayload)
@@ -280,7 +280,7 @@ document.getElementById('exportChatBtn').onclick = () => {
   const currentChat = conversations.find(c => c.id === activeChatId);
   if (!currentChat || currentChat.messages.length === 0) return;
   const content = currentChat.messages.map(m => `${m.role.toUpperCase()}:\n${m.text}\n`).join('\n---\n\n');
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' => {}});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `${currentChat.title.replace(/[^a-z0-9]/gi, '_')}.txt`;
@@ -296,4 +296,4 @@ function escapeHtml(str) {
 }
 
 init();
-          
+    
