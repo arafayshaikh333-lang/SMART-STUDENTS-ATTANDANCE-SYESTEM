@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b77">
+  <title>Smart Students Attendance System | College Attendance</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="stylesheet" href="styles.css">
+  <!-- QR generation is bundled locally. The scanner CDN is optional; Chrome/Edge can use native fallback. -->
+  <script src="vendor/qrcode-lite.js"></script>
+  <script async src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <section class="login-screen" id="login-screen" aria-label="Login">
+    <div class="login-brand-panel">
+      <div class="login-orbit orbit-a"></div><div class="login-orbit orbit-b"></div>
+      <img class="login-college-logo" src="assets/college-logo.jpg" alt="Government Superior Science College Khairpur logo">
+      <div class="login-college-label">GOVERNMENT SUPERIOR SCIENCE COLLEGE KHAIRPUR</div>
+      <h1>Smart Students<br>Attendance System</h1>
+      <p>QR-based attendance. Student profiles. Clear records. One organized workspace.</p>
+      <div class="login-feature-row"><span>✓ QR attendance</span><span>✓ Student records</span><span>✓ Leave management</span></div>
+    </div>
+    <div class="login-form-panel">
+      <div class="login-form-card">
+        <div class="login-mobile-logo"><img src="assets/college-logo.jpg" alt="College logo"></div>
+        <div class="overline">SECURE WORKSPACE</div>
+        <h2>Welcome back</h2>
+        <p class="login-subtitle">Sign in with your assigned account to continue.</p>
+        <form id="login-form" autocomplete="on">
+          <div class="login-field"><label for="login-username">Username</label><input id="login-username" name="username" type="text" autocomplete="username" required placeholder="Enter username"></div>
+          <div class="login-field login-password-field"><label for="login-password">Password</label><div class="password-input-wrap"><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Enter password"><button class="password-toggle" id="toggle-password" type="button" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+          <div id="login-error" class="login-error" role="alert" hidden>Incorrect username or password. Please try again.</div>
+          <button class="btn btn-primary login-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="login-help"><span class="login-lock">▣</span><span>Access depends on your assigned role. Contact the administrator if you need more permissions.</span></div>
+        <div class="login-footer">Smart Students Attendance System · Exhibition project</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard" aria-label="Smart Students Attendance System dashboard">
+        <img class="brand-logo" src="assets/college-logo.jpg" alt="Government Superior Science College Khairpur logo">
+        <span class="brand-copy"><strong>Smart Students</strong><small>Attendance System</small></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+        <button class="nav-link" data-page="students"><span class="nav-icon">♙</span>Students</button>
+        <button class="nav-link" data-page="scan"><span class="nav-icon">▣</span>Scan attendance</button>
+        <button class="nav-link" data-page="records"><span class="nav-icon">☷</span>Attendance records</button>
+        <button class="nav-link" data-page="leave"><span class="nav-icon">▤</span>Leave management</button>
+        <button class="nav-link" data-page="generator"><span class="nav-icon">⌗</span>QR generator</button>
+        <button class="nav-link" data-page="daily-report"><span class="nav-icon">▧</span>Daily Attendance Report</button>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span><span><b>Database ready</b><small>Saved on this browser</small></span></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div><div class="overline">COLLEGE ATTENDANCE</div><h1 id="page-title">Dashboard</h1></div>
+        <div class="topbar-right"><span class="role-chip" id="current-role">Signed out</span><span class="date-chip" id="header-date">—</span><button class="btn btn-outline logout-btn" id="logout-btn" type="button">Log out</button><button class="mobile-menu" id="mobile-menu" aria-label="Toggle menu">☰</button></div>
+      </header>
+
+      <section class="page active" id="page-dashboard">
+        <div class="hero">
+          <div class="hero-content"><div class="overline hero-overline">SMART STUDENTS ATTENDANCE SYSTEM</div><h2>Attendance, made simple.</h2><p>Register your students, scan their unique QR codes, and keep attendance records organized.</p><button class="btn btn-white" data-go="scan">Open QR scanner <span aria-hidden="true">→</span></button></div>
+          <div class="hero-art" aria-hidden="true"><div class="hero-ring ring-one"></div><div class="hero-ring ring-two"></div><div class="hero-check">✓</div><div class="hero-mini mini-one">QR</div><div class="hero-mini mini-two">✓</div></div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon icon-blue">♙</div><div class="stat-text"><span>Total students</span><strong id="stat-students">0</strong><small>Registered student profiles</small></div></article>
+          <article class="stat-card"><div class="stat-icon icon-green">✓</div><div class="stat-text"><span>Present today</span><strong id="stat-present">0</strong><small>Unique check-ins recorded</small></div></article>
+          <article class="stat-card"><div class="stat-icon icon-amber">◷</div><div class="stat-text"><span>Not yet present</span><strong id="stat-absent">0</strong><small>Excludes present and leave</small></div></article>
+          <article class="stat-card"><div class="stat-icon icon-amber">▤</div><div class="stat-text"><span>On leave today</span><strong id="stat-leave">0</strong><small>Leave entries recorded</small></div></article>
+        </div>
+        <div class="section-heading"><div><h2>Today's recent attendance</h2><p>Latest student check-ins</p></div><button class="btn btn-outline" data-go="records">View all records</button></div>
+        <div class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>ROLL NUMBER</th><th>TIME</th><th>STATUS</th></tr></thead><tbody id="recent-body"></tbody></table></div><div class="empty-state" id="recent-empty"><div class="empty-symbol">◷</div><b>No check-ins yet</b><p>Open Scan attendance and scan a student's QR code.</p></div></div>
+        <div class="notice-line"><span>ⓘ</span> Records are saved in this browser's local database. Use Backup JSON to keep a separate copy.</div>
+      </section>
+
+      <section class="page" id="page-students">
+        <div class="section-heading"><div><h2>Student directory</h2><p id="student-directory-description">Add, update, and manage student profiles.</p></div><button class="btn btn-primary" id="add-student-btn">＋ Add student</button></div>
+        <div class="toolbar"><label class="search-field"><span>⌕</span><input id="student-search" type="search" placeholder="Search name, roll number, or class…" aria-label="Search students"></label><button class="btn btn-outline" id="export-students">Export student CSV</button></div>
+        <div class="student-grid" id="student-grid"></div><div class="empty-state" id="students-empty"><div class="empty-symbol">♙</div><b>No students registered</b><p>Add your first student to get started.</p><button class="btn btn-primary" data-action="add-student">＋ Add student</button></div>
+      </section>
+
+      <section class="page" id="page-scan">
+        <div class="section-heading"><div><h2>Scan student QR</h2><p>Use a laptop or mobile camera to mark attendance.</p></div><span class="pill pill-blue">LIVE SCANNER</span></div>
+        <div class="scanner-grid">
+          <div class="panel scanner-panel"><div class="panel-heading"><div><h3>Camera scanner</h3><p>Allow camera permission when prompted.</p></div><span class="camera-badge">● Camera</span></div><div id="reader" class="reader-box"><div class="reader-fallback"><div class="qr-placeholder">▦</div><b>Camera is stopped</b><span>Press Start camera to scan a student QR code.</span></div></div><div class="scanner-actions"><button class="btn btn-primary" id="start-scan">Start camera</button><button class="btn btn-outline" id="stop-scan" disabled>Stop camera</button></div><p class="helper-text">Camera access generally requires <b>localhost</b> or an <b>HTTPS</b> website. If this page is opened as a plain file, run it with the local server instructions in README.</p><div class="manual-entry"><label for="manual-qr">Manual fallback — enter student QR ID</label><div class="inline-row"><input id="manual-qr" type="text" placeholder="e.g. SA-A1B2C3D4"><button id="manual-submit" class="btn btn-outline">Mark present</button></div></div></div>
+          <div class="panel result-panel"><div class="panel-heading"><div><h3>Scan result</h3><p>Student details appear here.</p></div></div><div id="scan-result" class="scan-empty"><div class="result-icon">▣</div><b>Ready to scan</b><p>Start the camera and point it at a registered student's QR code.</p></div></div>
+        </div>
+      </section>
+
+      <section class="page" id="page-records">
+        <div class="section-heading"><div><h2>Attendance records</h2><p>Check-in history saved in this browser.</p></div><div class="action-group"><button class="btn btn-outline" id="backup-json">Backup JSON</button><button class="btn btn-outline" id="restore-json-btn" data-role-admin>Restore backup</button><input type="file" id="restore-json-file" accept="application/json,.json" hidden><button class="btn btn-outline" id="export-records">Export CSV</button></div></div>
+        <div class="panel range-report-panel">
+          <div class="report-card-heading"><div><h3>Date-to-date attendance report</h3><p>Choose a month, year, or custom date range. Each registered student gets a daily status row.</p></div><span class="pill pill-blue">PDF + EXCEL</span></div>
+          <div class="report-filter-grid">
+            <label class="field"><span>Student</span><select id="range-report-student"><option value="all">All students</option></select></label>
+            <label class="field"><span>From date</span><input type="date" id="range-report-from"></label>
+            <label class="field"><span>To date</span><input type="date" id="range-report-to"></label>
+          </div>
+          <div class="report-action-row"><div class="quick-periods"><button class="btn btn-outline btn-small" id="range-this-month" type="button">This month</button><button class="btn btn-outline btn-small" id="range-this-year" type="button">This year</button></div><button class="btn btn-primary" id="generate-range-report" type="button">Generate report</button></div>
+          <div class="report-preview" id="range-report-preview" hidden>
+            <div class="report-summary-grid"><div class="report-summary-item"><span>Present</span><b id="range-present">0</b></div><div class="report-summary-item"><span>Absent</span><b id="range-absent">0</b></div><div class="report-summary-item"><span>On leave</span><b id="range-leave">0</b></div><div class="report-summary-item"><span>Late</span><b id="range-late">0</b></div></div>
+            <div class="report-preview-heading"><b id="range-report-caption">Report preview</b><div class="action-group"><button class="btn btn-outline btn-small" id="range-export-excel" type="button">Export Excel CSV</button><button class="btn btn-primary btn-small" id="range-export-pdf" type="button">Save PDF</button></div></div>
+            <div class="table-scroll report-table-scroll"><table><thead><tr><th>STUDENT</th><th>DOB</th><th>ROLL NO.</th><th>CLASS</th><th>DATE</th><th>TIME</th><th>STATUS</th><th>PUNCTUALITY</th></tr></thead><tbody id="range-report-body"></tbody></table></div>
+            <p class="report-footnote">Note: Every calendar date in this range is treated as a class day. Weekends and holidays are also included unless a school calendar is configured.</p>
+          </div>
+        </div>
+        <div class="toolbar records-toolbar"><label class="field-inline"><span>Date</span><input type="date" id="record-date"></label><label class="search-field"><span>⌕</span><input id="record-search" type="search" placeholder="Search name or roll number…" aria-label="Search records"></label><button class="btn btn-danger-outline" id="clear-day" data-role-admin>Clear selected day</button></div>
+        <div class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>DOB</th><th>ROLL NUMBER</th><th>CLASS</th><th>DATE</th><th>TIME</th><th>STATUS</th><th>PUNCTUALITY</th></tr></thead><tbody id="records-body"></tbody></table></div><div class="empty-state" id="records-empty"><div class="empty-symbol">☷</div><b>No matching records</b><p>Change the date or scan a student QR code.</p></div></div>
+        <div class="notice-line"><span>ⓘ</span> Backup JSON includes student profiles, photos, and attendance history. Keep the backup file private.</div>
+      </section>
+
+      <section class="page" id="page-leave">
+        <div class="section-heading"><div><h2>Leave management</h2><p>Record a student's leave for a selected date.</p></div></div>
+        <div class="leave-layout">
+          <div class="panel leave-form-panel">
+            <h3>Submit leave</h3><p>Choose a student, set the leave date and add a short reason. The student will be marked <b>On Leave</b>, and a second attendance entry for that date will be blocked.</p>
+            <form id="leave-form">
+              <div class="field"><label for="leave-student-search">Search student</label><input id="leave-student-search" type="search" placeholder="Type student name or roll number…" autocomplete="off"></div>
+              <div class="field"><label for="leave-student">Select student <span>*</span></label><select id="leave-student" required><option value="">Choose a student…</option></select></div>
+              <div class="field"><label for="leave-date">Leave date <span>*</span></label><input id="leave-date" type="date" required></div>
+              <div class="field"><label for="leave-reason">Reason for leave <span>*</span></label><textarea id="leave-reason" rows="4" required maxlength="300" placeholder="e.g. Sick leave, family event…"></textarea></div>
+              <button class="btn btn-primary btn-full" type="submit">Submit leave</button>
+            </form>
+            <div class="inline-note">Leave records are saved in the same local browser database as attendance records.</div>
+          </div>
+          <div class="panel leave-list-panel">
+            <div class="panel-heading"><div><h3>Leave records for selected date</h3><p>Change the date on the form to see another day.</p></div><span class="pill pill-blue">SAVED</span></div>
+            <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>CLASS</th><th>REASON</th><th>SUBMITTED</th><th data-role-admin>ACTION</th></tr></thead><tbody id="leave-body"></tbody></table></div>
+            <div class="empty-state" id="leave-empty"><div class="empty-symbol">▤</div><b>No leave records for this date</b><p>Submit a leave entry using the form.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-generator">
+        <div class="section-heading"><div><h2>QR code generator</h2><p>Generate and download student codes here. This page stays separate from the main attendance screen.</p></div></div>
+        <div class="generator-grid"><div class="panel generator-form"><h3>Generate a student QR</h3><p>Choose a registered student. Their QR contains a unique ID, not their personal details.</p><label for="qr-student">Select student</label><select id="qr-student"><option value="">Choose a student…</option></select><button class="btn btn-primary btn-full" id="generate-qr">Generate QR code</button><div class="inline-note">No student in the list yet? Add a profile in the Students section first.</div></div><div class="panel qr-output" id="qr-output"><div class="qr-empty-icon">⌗</div><b>Your QR code will appear here</b><p>Choose a student and generate their code, then download or print it.</p></div></div>
+      </section>
+
+      <section class="page" id="page-daily-report">
+        <div class="section-heading"><div><h2>Daily Attendance Report</h2><p>Select an individual student or all students and generate a dated attendance register.</p></div></div>
+        <div class="panel daily-report-controls">
+          <div class="report-filter-grid daily-filter-grid">
+            <label class="field"><span>Search student</span><input id="daily-student-search" type="search" placeholder="Search name, roll number, or class…" autocomplete="off"></label>
+            <label class="field"><span>Select student</span><select id="daily-report-student"><option value="all">All students</option></select></label>
+            <label class="field"><span>Report date</span><input type="date" id="daily-report-date"></label>
+          </div>
+          <div class="report-action-row"><span class="inline-note">Report includes name, DOB, roll number, class, check-in time, Present/Absent/Leave and punctuality.</span><button class="btn btn-primary" type="button" id="generate-daily-report">Generate daily report</button></div>
+        </div>
+        <div class="report-preview daily-report-preview" id="daily-report-preview" hidden>
+          <div class="report-summary-grid"><div class="report-summary-item"><span>Present</span><b id="daily-present">0</b></div><div class="report-summary-item"><span>Absent</span><b id="daily-absent">0</b></div><div class="report-summary-item"><span>On leave</span><b id="daily-leave">0</b></div><div class="report-summary-item"><span>Late</span><b id="daily-late">0</b></div></div>
+          <div class="report-preview-heading"><b id="daily-report-caption">Daily report preview</b><div class="action-group"><button class="btn btn-outline btn-small" type="button" id="daily-export-excel">Export Excel CSV</button><button class="btn btn-primary btn-small" type="button" id="daily-export-pdf">Save PDF</button></div></div>
+          <div class="panel table-panel"><div class="table-scroll report-table-scroll"><table><thead><tr><th>STUDENT NAME</th><th>DATE OF BIRTH</th><th>ROLL NUMBER</th><th>CLASS</th><th>DATE</th><th>TIME</th><th>STATUS</th><th>PUNCTUALITY</th></tr></thead><tbody id="daily-report-body"></tbody></table></div></div>
+          <p class="report-footnote">A date without a Present or Leave record is shown as Absent. Every calendar date is included in the report.</p>
+        </div>
+      </section>
+
+      <footer class="app-footer"><span>Smart Students Attendance System</span><span>Government Superior Science College Khairpur · Exhibition project</span></footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="student-modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-heading"><div><h2 id="modal-title">Add student</h2><p>Enter the student's details below.</p></div><button class="close-modal" type="button" id="close-modal" aria-label="Close dialog">×</button></div><form id="student-form"><input type="hidden" id="edit-id"><div class="form-fields"><div class="field full-field"><label for="student-name">Full name <span>*</span></label><input id="student-name" required maxlength="100" autocomplete="name" placeholder="e.g. Ayesha Khan"></div><div class="field"><label for="student-roll">Roll number <span>*</span></label><input id="student-roll" type="text" required minlength="4" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off" placeholder="Enter exactly 4 digits" title="Roll number must be exactly 4 digits"></div><div class="field"><label for="student-dob">Date of birth <span>*</span></label><input id="student-dob" type="date" required autocomplete="bday" title="Student date of birth is required"></div><div class="field"><label for="student-class">Class / department <span>*</span></label><select id="student-class" required><option value="" disabled selected>Select a department…</option><option value="Computer Science">Computer Science</option><option value="Pre-Engineering">Pre-Engineering</option><option value="Pre-Medical">Pre-Medical</option></select></div><div class="field"><label for="student-email">Email (optional)</label><input id="student-email" type="email" maxlength="120" placeholder="student@example.com"></div><div class="field"><label for="student-phone">Phone (optional)</label><input id="student-phone" maxlength="30" placeholder="Contact number"></div><div class="field full-field"><label for="student-photo">Student photo (optional)</label><input id="student-photo" type="file" accept="image/*"><small>Photo is resized before saving to reduce storage usage.</small><div class="photo-preview" id="photo-preview" hidden></div></div></div><div class="modal-actions"><button class="btn btn-outline" type="button" id="cancel-modal">Cancel</button><button class="btn btn-primary" type="submit" id="save-student">Save student</button></div></form></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
