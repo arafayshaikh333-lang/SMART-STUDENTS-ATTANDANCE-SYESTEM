@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-attendance-shell-v3';
+const CACHE_NAME = 'smart-attendance-shell-v4';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './vendor/qrcode-lite.js', './assets/college-logo.jpg', './assets/favicon.png',

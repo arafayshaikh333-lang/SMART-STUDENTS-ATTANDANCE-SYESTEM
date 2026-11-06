@@ -54,3 +54,16 @@ The shared `CS-STUDENTS` account writes new rows using duplicate-ignoring upsert
 ## RLS insert-only update (v3)
 
 The CS-STUDENTS portal now uses direct INSERT calls for records missing in the cloud and never uses UPSERT. Existing rows are skipped. Admin continues to use UPSERT. Service worker cache was incremented to v3 so browsers fetch the corrected JavaScript.
+
+
+## Shared deletion sync (required for all-device deletes)
+
+The app now keeps Admin deletions in an append-only `public.cloud_deletions` ledger. This prevents an old IndexedDB copy on another device from re-uploading a student, attendance record, or leave request after the Admin deletes it.
+
+1. Open Supabase → SQL Editor → New Query.
+2. Open `CLOUD-DELETE-SYNC-MIGRATION.sql` from this project folder and copy the complete contents.
+3. Paste into the new Supabase query and click Run once.
+4. Confirm `Success. No rows returned`.
+5. Upload the updated project files to the published website and refresh the app on each device while online.
+
+The migration does not delete existing student, attendance, leave, or profile data. It only creates the shared deletion ledger and its RLS policies. Do not grant students INSERT, UPDATE, or DELETE permissions on the main tables beyond the existing insert-only policies.

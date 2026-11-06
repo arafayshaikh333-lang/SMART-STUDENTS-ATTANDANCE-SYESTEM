@@ -721,8 +721,12 @@
     const record=(await allAttendance()).find(r=>r.id===id && r.status==='Leave');
     if(!record)return;
     if(!confirm(`Cancel leave for ${record.name} on ${record.date}?`))return;
-    try { await requestPromise(txStore(STORE_ATTENDANCE,'readwrite').delete(id)); await refreshAll(); notify(`Leave cancelled for ${record.name}.`); }
-    catch(err){notify(`Could not cancel leave: ${err.message||'database error'}`,'error');}
+    try {
+      addCloudTombstone({type:'attendance',studentId:String(record.studentId),date:String(record.date)});
+      await requestPromise(txStore(STORE_ATTENDANCE,'readwrite').delete(id));
+      await refreshAll();
+      notify(state.cloudReady ? `Leave cancelled for ${record.name} on all synced devices.` : 'Leave cancelled locally; cloud deletion is pending sync. Keep this device online and signed in as Admin.', state.cloudReady ? 'success' : 'error');
+    } catch(err){notify(`Could not cancel leave: ${err.message||'database error'}`,'error');}
   }
 
   async function populateQrSelect(preselect='') {
@@ -788,9 +792,12 @@
   async function removeStudent(id) {
     if (!requireAdmin('Only the administrator can delete student profiles.')) return;
     const student=await getStudent(id); if(!student) return;
-    if(!confirm(`Delete ${student.name} (${student.roll}) from the student directory? Existing attendance history will be retained.`)) return;
-    try { await deleteStudent(id); await refreshAll(); notify('Student deleted. Historical attendance is retained.'); }
-    catch(err){notify(`Could not delete student: ${err.message}`,'error');}
+    if(!confirm(`Delete ${student.name} (${student.roll}) from the student directory on all synced devices? Existing attendance history will be retained.`)) return;
+    try {
+      await deleteStudent(id);
+      await refreshAll();
+      notify(state.cloudReady ? 'Student deleted from the shared cloud and synced devices. Historical attendance is retained.' : 'Student removed on this device; cloud deletion is pending sync. Keep this device online and signed in as Admin.', state.cloudReady ? 'success' : 'error');
+    } catch(err){notify(`Could not delete student: ${err.message}`,'error');}
   }
   function normalizeQr(text) {
     let value=String(text||'').trim();
@@ -1158,10 +1165,18 @@
 
   async function clearSelectedDay() {
     if (!requireAdmin('Only the administrator can clear attendance records.')) return;
-    const date=$('record-date').value||localDateKey(); const matching=(await allAttendance()).filter(r=>r.date===date);
+    const date=$('record-date').value||localDateKey();
+    const matching=(await allAttendance()).filter(r=>r.date===date);
     if(!matching.length){notify('There are no attendance records for that date.','error');return;}
-    if(!confirm(`Permanently delete all ${matching.length} attendance records for ${date}? This cannot be undone.`))return;
-    try{for(const row of matching)addCloudTombstone({type:'attendance',studentId:String(row.studentId),date:String(row.date)});const store=txStore(STORE_ATTENDANCE,'readwrite');for(const row of matching)store.delete(row.id);await new Promise((resolve,reject)=>{const tx=store.transaction;tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});await refreshAll();notify(`Removed ${matching.length} attendance records for ${date}.`);}catch(err){notify(`Could not clear records: ${err.message}`,'error');}
+    if(!confirm(`Permanently delete all ${matching.length} attendance records for ${date} from the shared cloud and synced devices? This cannot be undone.`))return;
+    try {
+      for(const row of matching)addCloudTombstone({type:'attendance',studentId:String(row.studentId),date:String(row.date)});
+      const tx=state.db.transaction(STORE_ATTENDANCE,'readwrite'),store=tx.objectStore(STORE_ATTENDANCE);
+      for(const row of matching)store.delete(row.id);
+      await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Delete failed'));tx.onabort=()=>reject(tx.error||new Error('Delete was cancelled'));});
+      await refreshAll();
+      notify(state.cloudReady ? `Removed ${matching.length} attendance records from the shared cloud and synced devices.` : 'Attendance removed locally; cloud deletion is pending sync. Keep this device online and signed in as Admin.', state.cloudReady ? 'success' : 'error');
+    } catch(err){notify(`Could not clear records: ${err.message}`,'error');}
   }
   function toStudentDb(s) {
     return { id:String(s.id), name:s.name||'', roll:String(s.roll||''), date_of_birth:s.dateOfBirth||null,
@@ -1216,28 +1231,74 @@
     }
     await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Local sync write failed'));tx.onabort=()=>reject(tx.error||new Error('Local sync was cancelled'));});
   }
+  function tombstoneIdentity(item) {
+    if(item.type==='student') return { entity_type:'student', record_key:String(item.id) };
+    if(item.type==='attendance') return { entity_type:'attendance', record_key:`${String(item.studentId)}::${String(item.date)}` };
+    if(item.type==='leave') return { entity_type:'leave', record_key:String(item.id) };
+    return null;
+  }
   async function applyCloudTombstones() {
-    // Only Admin may propagate deletes to the shared cloud database.
-    // The shared student portal is intentionally insert-only for existing records.
+    // Admin writes each delete to a shared append-only cloud ledger before
+    // removing the cloud row. Other devices read the ledger before merging,
+    // so stale local copies cannot recreate a deleted record.
     if (!isAdmin()) return;
     const tombstones=readCloudTombstones(); if(!tombstones.length) return;
     const remaining=[];
+    let firstError='';
     for(const item of tombstones) {
-      let query;
-      if(item.type==='student') query=state.supabase.from('students').delete().eq('id',item.id);
-      else if(item.type==='attendance') query=state.supabase.from('attendance').delete().eq('student_id',item.studentId).eq('date',item.date);
-      else if(item.type==='leave') query=state.supabase.from('leave_requests').delete().eq('id',item.id);
-      else continue;
-      const {error}=await query;
-      if(error) remaining.push(item);
+      const identity=tombstoneIdentity(item);
+      if(!identity) continue;
+      try {
+        const existing=await state.supabase.from('cloud_deletions').select('record_key').eq('entity_type',identity.entity_type).eq('record_key',identity.record_key).maybeSingle();
+        if(existing.error) throw existing.error;
+        if(!existing.data) {
+          const inserted=await state.supabase.from('cloud_deletions').insert({
+            entity_type:identity.entity_type,
+            record_key:identity.record_key,
+            deleted_at:new Date().toISOString(),
+            deleted_by:state.authUser?.id || null
+          });
+          if(inserted.error && inserted.error.code!=='23505') throw inserted.error;
+        }
+        let deletion;
+        if(item.type==='student') deletion=await state.supabase.from('students').delete().eq('id',item.id);
+        else if(item.type==='attendance') deletion=await state.supabase.from('attendance').delete().eq('student_id',item.studentId).eq('date',item.date);
+        else if(item.type==='leave') deletion=await state.supabase.from('leave_requests').delete().eq('id',item.id);
+        if(deletion?.error) throw deletion.error;
+      } catch(err) {
+        remaining.push(item);
+        if(!firstError) firstError=err?.message || String(err);
+      }
     }
     localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(remaining));
+    if(remaining.length) throw new Error(`Cloud delete is pending: ${firstError || 'could not write the shared deletion record'}`);
+  }
+  async function applyRemoteCloudDeletions(rows) {
+    const deletedStudents=new Set(), deletedAttendance=new Set(), deletedLeaves=new Set();
+    for(const row of rows||[]) {
+      const key=String(row.record_key||'');
+      if(row.entity_type==='student') deletedStudents.add(key);
+      else if(row.entity_type==='attendance') deletedAttendance.add(key);
+      else if(row.entity_type==='leave') deletedLeaves.add(key);
+    }
+    if(!deletedStudents.size && !deletedAttendance.size && !deletedLeaves.size) return;
+    const [students,attendance,leaves]=await Promise.all([allStudents(),allAttendance(),allLeaveRequests()]);
+    const tx=state.db.transaction([STORE_STUDENTS,STORE_ATTENDANCE,STORE_LEAVE_REQUESTS],'readwrite');
+    const studentStore=tx.objectStore(STORE_STUDENTS), attendanceStore=tx.objectStore(STORE_ATTENDANCE), leaveStore=tx.objectStore(STORE_LEAVE_REQUESTS);
+    for(const row of students) if(deletedStudents.has(String(row.id))) studentStore.delete(row.id);
+    for(const row of attendance) if(deletedAttendance.has(`${String(row.studentId)}::${String(row.date)}`)) attendanceStore.delete(row.id);
+    for(const row of leaves) if(deletedLeaves.has(String(row.id))) leaveStore.delete(row.id);
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Could not apply cloud deletions locally'));tx.onabort=()=>reject(tx.error||new Error('Applying cloud deletions was cancelled'));});
   }
   async function syncCloudData() {
     if(!state.supabase || !state.authUser || !state.db || !navigator.onLine || state.cloudSyncing) return;
     state.cloudSyncing=true;
     try {
       await applyCloudTombstones();
+      const deletionsRes=await state.supabase.from('cloud_deletions').select('entity_type,record_key');
+      if(deletionsRes.error) throw deletionsRes.error;
+      const cloudDeletionRows=deletionsRes.data||[];
+      await applyRemoteCloudDeletions(cloudDeletionRows);
       const [localStudents,localAttendance,localLeaves]=await Promise.all([allStudents(),allAttendance(),allLeaveRequests()]);
       const [studentsRes,attendanceRes,leavesRes]=await Promise.all([
         state.supabase.from('students').select('*'),
@@ -1247,9 +1308,12 @@
       if(studentsRes.error) throw studentsRes.error;
       if(attendanceRes.error) throw attendanceRes.error;
       if(leavesRes.error) throw leavesRes.error;
-      const cloudStudents=(studentsRes.data||[]).map(fromStudentDb);
-      const cloudAttendance=(attendanceRes.data||[]).map(r=>fromAttendanceDb(r,localAttendance.find(x=>String(x.studentId)===String(r.student_id)&&x.date===r.date)));
-      const cloudLeaves=(leavesRes.data||[]).map(fromLeaveDb);
+      const deletedStudents=new Set(cloudDeletionRows.filter(r=>r.entity_type==='student').map(r=>String(r.record_key)));
+      const deletedAttendance=new Set(cloudDeletionRows.filter(r=>r.entity_type==='attendance').map(r=>String(r.record_key)));
+      const deletedLeaves=new Set(cloudDeletionRows.filter(r=>r.entity_type==='leave').map(r=>String(r.record_key)));
+      const cloudStudents=(studentsRes.data||[]).filter(r=>!deletedStudents.has(String(r.id))).map(fromStudentDb);
+      const cloudAttendance=(attendanceRes.data||[]).filter(r=>!deletedAttendance.has(`${String(r.student_id)}::${String(r.date)}`)).map(r=>fromAttendanceDb(r,localAttendance.find(x=>String(x.studentId)===String(r.student_id)&&x.date===r.date)));
+      const cloudLeaves=(leavesRes.data||[]).filter(r=>!deletedLeaves.has(String(r.id))).map(fromLeaveDb);
       const studentMap=new Map();
       for(const row of localStudents) studentMap.set(String(row.id),row);
       for(const row of cloudStudents) { const old=studentMap.get(String(row.id)); studentMap.set(String(row.id),old?newestStudent(old,row):row); }
