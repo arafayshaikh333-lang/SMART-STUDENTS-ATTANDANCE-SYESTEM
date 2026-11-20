@@ -112,3 +112,73 @@ body.authenticated .login-screen,.login-screen[hidden]{display:none!important}
 .absent-banner{padding:11px;border-radius:9px;background:#fff0ef;color:#b42318;font-size:12px;font-weight:800}
 /* Respect the HTML hidden attribute even on elements styled with display:flex/inline-flex. */
 [hidden] { display: none !important; }
+
+/* Premium blue + purple visual refresh. Layout and application behavior remain unchanged. */
+:root{
+  --blue:#2864e8;
+  --blue-dark:#1f50bd;
+  --purple:#7956d8;
+  --purple-dark:#6240bf;
+  --purple-soft:#f1edff;
+  --blue-soft:#edf3ff;
+  --line:#e7e9f3;
+  --shadow:0 10px 30px rgba(39,65,120,.075);
+}
+body{background:linear-gradient(135deg,#f7f9ff 0%,#f8f7ff 48%,#f6f8fc 100%)}
+/* The college emblem stays anchored in its existing position and gently floats in place. */
+@keyframes collegeLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.login-college-logo,.login-mobile-logo img,.brand-logo{
+  animation:collegeLogoFloat 4.2s ease-in-out infinite;
+  will-change:transform;
+}
+.login-college-logo{border-color:#d9d0ff;box-shadow:0 15px 35px rgba(17,40,73,.28),0 0 0 7px rgba(255,255,255,.08)}
+.brand-logo{border:2px solid #e4dcff;box-shadow:0 5px 16px rgba(83,64,160,.13)}
+.sidebar{background:linear-gradient(180deg,#fff 0%,#fff 72%,#faf9ff 100%);border-right-color:#e5e4f2}
+.brand{padding-bottom:31px}
+.brand-copy strong{color:#20365e}
+.brand-copy small{color:#7f79a0}
+.nav-link{transition:background .2s ease,color .2s ease,transform .2s ease}
+.nav-link:hover{background:linear-gradient(90deg,#edf3ff,#f4f0ff);color:var(--purple-dark);transform:translateX(2px)}
+.nav-link.active{color:var(--blue);background:linear-gradient(100deg,#eaf1ff 0%,#f1edff 100%);box-shadow:inset 3px 0 0 var(--purple)}
+.nav-link.active .nav-icon{color:var(--purple)}
+.topbar .overline{color:#7968b5}
+.topbar h1{color:#1d3154}
+.date-chip,.role-chip{box-shadow:0 3px 12px rgba(38,67,125,.045)}
+.role-chip{background:linear-gradient(100deg,#edf3ff,#f1edff);border-color:#e0d9ff;color:#5540a5}
+.hero{background:linear-gradient(112deg,#17365f 0%,#2455b9 58%,#2864e8 82%,#7355ce 120%);box-shadow:0 14px 34px rgba(38,83,176,.17)}
+.hero:after{content:"";position:absolute;width:290px;height:290px;border-radius:50%;right:-105px;top:-175px;background:radial-gradient(circle,rgba(190,166,255,.26),rgba(190,166,255,0) 68%);pointer-events:none}
+.btn-primary{background:linear-gradient(105deg,#2864e8,#5e55d6);box-shadow:0 5px 13px rgba(54,83,190,.17)}
+.btn-primary:hover:not(:disabled){background:linear-gradient(105deg,#1f50bd,#6240bf);box-shadow:0 7px 17px rgba(54,83,190,.23)}
+.btn-outline:hover:not(:disabled){background:#f3f0ff;border-color:#d9cffb;color:#6044b9}
+.panel,.stat-card{border-color:#e8e9f2;box-shadow:var(--shadow)}
+.stat-card{position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}
+.stat-card:after{content:"";position:absolute;right:-24px;top:-28px;width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,rgba(40,100,232,.09),rgba(121,86,216,.11));pointer-events:none}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(39,65,120,.11)}
+.icon-blue{background:linear-gradient(135deg,#e8f0ff,#eeeaff);color:#2864e8}
+.icon-green{background:#e7f7ef;color:#16845b}
+.icon-amber{background:#fff4d9;color:#ad6a08}
+.section-heading h2,.report-card-heading h3{color:#26385d}
+thead th{background:linear-gradient(90deg,#f1f5ff,#f5f2ff);color:#716b91}
+.report-table-scroll th{background:#f1f2ff}
+input:focus,select:focus,textarea:focus{border-color:#8b79e4!important;box-shadow:0 0 0 3px rgba(121,86,216,.12)!important}
+.login-screen{background:linear-gradient(120deg,#f5f8ff 0%,#f7f5ff 100%)}
+.login-brand-panel{background:linear-gradient(145deg,#112849 0%,#173f7b 53%,#2864d8 83%,#6548bb 125%)}
+.login-brand-panel:before{content:"";position:absolute;width:390px;height:390px;left:-190px;top:-220px;border-radius:50%;background:radial-gradient(circle,rgba(147,117,235,.25),transparent 68%);pointer-events:none}
+.login-orbit{border-color:rgba(210,197,255,.22)}
+.login-college-label{color:#e0d8ff}
+.login-form-card{border-color:#e7e2f6;box-shadow:0 24px 65px rgba(42,54,105,.10)}
+.login-form-card>.overline{color:#7055c9}
+.login-form-card h2{color:#1b3158}
+.login-field input:focus{border-color:#8068dc;box-shadow:0 0 0 3px rgba(121,86,216,.13);background:#fff}
+.password-toggle:hover,.password-toggle[aria-pressed="true"]{background:#f1edff;color:#6240bf}
+.login-lock{background:linear-gradient(135deg,#eaf1ff,#f1edff);color:#6240bf}
+.login-mobile-logo img{border-color:#dcd3ff;box-shadow:0 8px 24px rgba(79,65,148,.14)}
+.searchable-select-options,.student-picker-options{border-color:#e2dcf5;box-shadow:0 14px 34px rgba(45,49,94,.15)}
+.searchable-select-option:hover,.searchable-select-option:focus,.student-picker-option:hover,.student-picker-option:focus{background:#f1edff;color:#6240bf}
+@media(prefers-reduced-motion:reduce){.login-college-logo,.login-mobile-logo img,.brand-logo{animation:none!important;will-change:auto}}
+
+/* Logo size enhancement: keep the same position and floating animation */
+.brand-logo{width:58px;height:58px;flex:0 0 58px;padding:3px}
+.login-college-logo{width:126px;height:126px}
+@media(max-width:850px){.login-college-logo{width:104px;height:104px}}
+@media(max-width:650px){.login-mobile-logo img{width:90px;height:90px}}
