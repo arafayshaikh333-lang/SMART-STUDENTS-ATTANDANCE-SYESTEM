@@ -182,3 +182,51 @@ input:focus,select:focus,textarea:focus{border-color:#8b79e4!important;box-shado
 .login-college-logo{width:126px;height:126px}
 @media(max-width:850px){.login-college-logo{width:104px;height:104px}}
 @media(max-width:650px){.login-mobile-logo img{width:90px;height:90px}}
+
+
+/* Blue + purple VFX halo behind the college logo.
+   Keeps the logo anchored and preserves its existing gentle float. */
+@keyframes collegeLogoVfx {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 7px rgba(48, 112, 255, .58))
+      drop-shadow(0 0 15px rgba(126, 83, 230, .38))
+      drop-shadow(0 9px 18px rgba(10, 25, 65, .22));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 12px rgba(48, 132, 255, .78))
+      drop-shadow(0 0 24px rgba(153, 104, 255, .58))
+      drop-shadow(0 10px 22px rgba(10, 25, 65, .24));
+  }
+}
+.login-college-logo,
+.login-mobile-logo img {
+  animation:
+    collegeLogoFloat 4.2s ease-in-out infinite,
+    collegeLogoVfx 3.6s ease-in-out infinite;
+}
+.login-college-logo {
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.20),
+    0 0 0 7px rgba(91,116,255,.10),
+    0 12px 32px rgba(6,22,44,.30);
+}
+.login-mobile-logo img {
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.88),
+    0 0 0 7px rgba(111,91,232,.12),
+    0 8px 24px rgba(79,65,148,.18);
+}
+/* The small sidebar mark gets a restrained halo so it stays crisp. */
+.brand-logo {
+  filter:
+    drop-shadow(0 0 5px rgba(48,112,255,.32))
+    drop-shadow(0 0 10px rgba(126,83,230,.24));
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-college-logo,
+  .login-mobile-logo img {
+    animation: none !important;
+  }
+}
